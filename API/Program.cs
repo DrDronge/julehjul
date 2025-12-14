@@ -41,7 +41,7 @@ async Task SendMail(RollEnum roll)
     var message = new MimeMessage();
     message.From.Add(new MailboxAddress("Christmas Tool", SenderMail));
     message.To.Add(new MailboxAddress("Me", ReceiverMail));
-    message.Subject = "Program Result";
+    message.Subject = "Snædis har rullet julehjulet!";
 
     message.Body = new TextPart("plain")
     {
