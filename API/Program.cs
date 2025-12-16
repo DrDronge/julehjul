@@ -9,6 +9,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+// Allow the frontend to call the API when deployed via Docker Compose
+builder.Services.AddCors(options =>
+{
+  options.AddDefaultPolicy(policy =>
+  {
+    policy.AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowAnyOrigin();
+  });
+});
 
 var app = builder.Build();
 
@@ -18,56 +28,58 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors();
+
 // app.UseHttpsRedirection();
 
-app.MapPost("/sendresult", async (SendResultRequest request) =>
+app.MapPost("/sendresult", (SendResultRequest request) =>
 {
-    // Process the received roll result
-    await SendMail(request.Roll);
-    return Results.Ok();
-});
+  // Process the received roll result
+  SendMail(request.Roll);
+  return Task.FromResult(Results.Ok());
+}).Accepts<SendResultRequest>("application/json");
 
-async Task SendMail(RollEnum roll)
+void SendMail(RollEnum roll)
 {
 
-    Env.Load();
-    
-    var ReceiverMail = Environment.GetEnvironmentVariable("RECEIVERMAIL");
-    var SenderMail = Environment.GetEnvironmentVariable("SENDEREMAIL");
-    var AppPassword = Environment.GetEnvironmentVariable("APPPASSWORD");
-    var SmtpServer = Environment.GetEnvironmentVariable("SMTPSERVER");
-    var SmtpPort = Environment.GetEnvironmentVariable("SMTPPORT");
-    
-    var message = new MimeMessage();
-    message.From.Add(new MailboxAddress("Christmas Tool", SenderMail));
-    message.To.Add(new MailboxAddress("Me", ReceiverMail));
-    message.Subject = "Snædis har rullet julehjulet!";
+  Env.Load();
 
-    message.Body = new TextPart("plain")
-    {
-        Text = $"Snædis har rullet: {roll}"
-    };
+  var receiverMail = Environment.GetEnvironmentVariable("RECEIVERMAIL");
+  var senderMail = Environment.GetEnvironmentVariable("SENDEREMAIL");
+  var appPassword = Environment.GetEnvironmentVariable("APPPASSWORD");
+  var smtpServer = Environment.GetEnvironmentVariable("SMTPSERVER");
+  var smtpPort = Environment.GetEnvironmentVariable("SMTPPORT");
 
-    using var client = new SmtpClient();
+  var message = new MimeMessage();
+  message.From.Add(new MailboxAddress("Christmas Tool", senderMail));
+  message.To.Add(new MailboxAddress("Me", receiverMail));
+  message.Subject = "Snædis har rullet julehjulet!";
 
-    if (!int.TryParse(SmtpPort, out var port))
-    {
-        throw new Exception("Invalid SMTP port");
-    }
-    // Gmail SMTP
-    client.Connect(
-        SmtpServer,
-        port,
-        SecureSocketOptions.StartTls
-    );
+  message.Body = new TextPart("plain")
+  {
+    Text = $"Snædis har rullet: {roll}"
+  };
 
-    client.Authenticate(
-        SenderMail,
-        AppPassword
-    );
+  using var client = new SmtpClient();
 
-    client.Send(message);
-    client.Disconnect(true);
+  if (!int.TryParse(smtpPort, out var port))
+  {
+    throw new Exception("Invalid SMTP port");
+  }
+  // Gmail SMTP
+  client.Connect(
+      smtpServer,
+      port,
+      SecureSocketOptions.StartTls
+  );
+
+  client.Authenticate(
+      senderMail,
+      appPassword
+  );
+
+  client.Send(message);
+  client.Disconnect(true);
 }
 
 app.Run();

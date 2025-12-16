@@ -79,7 +79,35 @@
     setTimeout(() => {
       spinning = false;
       winningSlice = target;
+      sendMail(target.label);
     }, 3000);
+  }
+
+  function sendMail(label: string) {
+    // Map the segment label to the API's Roll enum name (API expects string enum values)
+    let rollName = "FullPrice";
+
+    if (label.includes("75")) {
+      rollName = "SeventyFivePercent";
+    } else if (label.includes("50")) {
+      rollName = "HalfPrice";
+    } else if (label.includes("100")) {
+      rollName = "FullPrice";
+    }
+
+    // POST to the API service by its docker-compose service name `api` on the internal port 5000
+    // The API uses a JsonStringEnumConverter so we send the enum as a string.
+    fetch("http://api:5000/sendresult", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ Roll: rollName }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`sendresult failed: ${res.status}`);
+      })
+      .catch((err) => {
+        console.error("sendMail error:", err);
+      });
   }
 </script>
 
