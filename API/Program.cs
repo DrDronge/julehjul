@@ -15,9 +15,9 @@ builder.Services.AddCors(options =>
 {
   options.AddDefaultPolicy(policy =>
   {
-    policy.AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowAnyOrigin();
+    policy.WithOrigins("https://julehjul.madpro.dk/api")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
   });
 });
 
