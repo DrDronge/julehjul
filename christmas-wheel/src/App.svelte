@@ -131,6 +131,7 @@
 
 <div class="container">
   <h1 class="title">🎄 Christmas Wheel 🎄</h1>
+  <h2>Rul og vind et par valgfri klatresko! 👟</h2>
   <div class="container">
     <div class="wheel-wrapper">
       <div class="pointer"></div>
