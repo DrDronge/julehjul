@@ -173,10 +173,6 @@
       {spinning ? "Spinning…" : hasSpun ? "Already spun" : "Spin"}
     </button>
 
-    {#if hasSpun}
-      <div style="margin-top:8px;color:gray;font-size:0.9rem">Du har allerede drejet hjulet og har vundet! {winningSlice?.label}</div>
-    {/if}
-
     {#if winningSlice}
       <strong>🎉 Du har rullet og vundet {winningSlice.label} på et par klatresko!</strong>
     {/if}
