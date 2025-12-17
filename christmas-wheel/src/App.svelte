@@ -31,7 +31,7 @@
 
   // On load, check if there's already a spin result stored on the server
   if (typeof window !== 'undefined') {
-    fetch(`http://localhost:5002/spinresult`)
+    fetch(`https://julehjulapi.madpro.dk/spinresult`)
       .then((res) => {
         if (!res.ok) return;
         return res.json();
@@ -115,7 +115,7 @@
 
     // POST to the API service by its docker-compose service name `api` on the internal port 5000
     // The API uses a JsonStringEnumConverter so we send the enum as a string.
-    fetch("http://localhost:5002/sendresult", {
+    fetch("https://julehjulapi.madpro.dk/sendresult", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ Roll: rollName }),
