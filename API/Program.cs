@@ -3,6 +3,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using System.Text.Json.Serialization;
+using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// In-memory, process-local flag that prevents more than one successful spin per container lifetime.
+// 0 = not spun yet, 1 = already spun
+int hasSpun = 0;
+
+// Store the winning label (e.g. "50%", "75%", "100%") so clients can fetch it after refresh.
+string? winningLabel = null;
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -34,10 +42,33 @@ app.UseHttpsRedirection();
 
 app.MapPost("/sendresult", (SendResultRequest request) =>
 {
+  // Allow only a single successful spin per container lifetime.
+  // Interlocked.CompareExchange returns the original value; if it was 0 we set it to 1 and proceed.
+  var prev = Interlocked.CompareExchange(ref hasSpun, 1, 0);
+  if (prev == 1)
+  {
+    return Task.FromResult(Results.StatusCode(403));
+  }
+
   // Process the received roll result
   SendMail(request.Roll);
+
+  // Store a human-friendly winning label for clients to show after refresh
+  winningLabel = request.Roll switch
+  {
+    RollEnum.HalfPrice => "50%",
+    RollEnum.SeventyFivePercent => "75%",
+    RollEnum.FullPrice => "100%",
+    _ => null
+  };
   return Task.FromResult(Results.Ok());
 }).Accepts<SendResultRequest>("application/json");
+
+app.MapGet("/spinresult", () =>
+{
+  if (winningLabel is null) return Results.Empty;
+  return Results.Ok(new { label = winningLabel });
+});
 
 void SendMail(RollEnum roll)
 {

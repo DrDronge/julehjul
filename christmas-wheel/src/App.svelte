@@ -26,7 +26,24 @@
 
   let rotation = 0;
   let spinning = false;
+  let hasSpun = false;
   let winningSlice: Slice | null = null;
+
+  // On load, check if there's already a spin result stored on the server
+  if (typeof window !== 'undefined') {
+    fetch(`http://localhost:5002/spinresult`)
+      .then((res) => {
+        if (!res.ok) return;
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || !data.label) return;
+        hasSpun = true;
+        // Find matching slice by label (labels are like "75%", "50%", "100%")
+        winningSlice = slices.find((s) => s.label === data.label) ?? null;
+      })
+      .catch(() => {});
+  }
 
   $: slices = (() => {
     const total = segments.reduce((s, seg) => s + seg.weight, 0);
@@ -66,7 +83,7 @@
   }
 
   function spin() {
-    if (spinning) return;
+    if (spinning || hasSpun) return;
     spinning = true;
     winningSlice = null;
 
@@ -80,6 +97,7 @@
       spinning = false;
       winningSlice = target;
       sendMail(target.label);
+      hasSpun = true;
     }, 3000);
   }
 
@@ -150,12 +168,16 @@
       </svg>
     </div>
 
-    <button on:click={spin} disabled={spinning}>
-      {spinning ? "Spinning…" : "Spin"}
+    <button on:click={spin} disabled={spinning || hasSpun}>
+      {spinning ? "Spinning…" : hasSpun ? "Already spun" : "Spin"}
     </button>
 
+    {#if hasSpun}
+      <div style="margin-top:8px;color:gray;font-size:0.9rem">Du har allerede drejet hjulet og har vundet! {winningSlice?.label}</div>
+    {/if}
+
     {#if winningSlice}
-      <strong>🎉 You won: {winningSlice.label}</strong>
+      <strong>🎉 Du har rullet og vundet {winningSlice.label} på et par klatresko!</strong>
     {/if}
   </div>
 </div>
