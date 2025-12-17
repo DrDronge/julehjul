@@ -1,12 +1,13 @@
-version: '3.8'
 services:
   api:
     build:
       context: ./API
       dockerfile: Dockerfile
     image: julehjul_api:latest
+    env_file:
+      - ./API/.env
     ports:
-      - "5000:5000"
+      - "5002:5002"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     restart: unless-stopped
@@ -16,6 +17,7 @@ services:
       context: ./christmas-wheel
       dockerfile: Dockerfile
     image: julehjul_frontend:latest
+    command: ["npm", "run", "dev", "--", "--host"]
     ports:
       - "5173:5173"
     depends_on:

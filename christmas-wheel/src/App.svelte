@@ -97,7 +97,7 @@
 
     // POST to the API service by its docker-compose service name `api` on the internal port 5000
     // The API uses a JsonStringEnumConverter so we send the enum as a string.
-    fetch("http://api:5000/sendresult", {
+    fetch("http://localhost:5002/sendresult", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ Roll: rollName }),
